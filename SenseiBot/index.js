@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const { Client, GatewayIntentBits, EmbedBuilder, ChannelType } = require('discord.js');
 
 // Welcome System Class
@@ -155,53 +157,22 @@ class CommandHandler {
     this.setupCommands();
   }
 
-  setupCommands() {
-    // Hello command
-    this.commands.set('hello', {
-      description: 'Greet the user',
-      execute: async (message, args) => {
-        const embed = new EmbedBuilder()
-          .setColor(0x3498db)
-          .setTitle('👋 Hello!')
-          .setDescription(`Hello, ${message.author.username}! I'm SenseiBot 🤖`)
-          .setTimestamp();
-        
-        await message.reply({ embeds: [embed] });
-      }
-    });
+setupCommands() {
 
-    // Rules command
-    this.commands.set('rules', {
-      description: 'Display server rules',
-      execute: async (message, args) => {
-        const welcomeSystem = new WelcomeSystem(this.client);
-        const rulesEmbed = welcomeSystem.createRulesEmbed(message.guild);
-        await message.reply({ embeds: [rulesEmbed] });
-      }
-    });
+  const commandsPath = path.join(__dirname, 'src','commands');
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-    // Help command
-    this.commands.set('help', {
-      description: 'Show available commands',
-      execute: async (message, args) => {
-        const embed = new EmbedBuilder()
-          .setColor(0x3498db)
-          .setTitle('📚 Available Commands')
-          .setDescription('Here are the commands you can use:')
-          .setTimestamp();
-
-        this.commands.forEach((command, name) => {
-          embed.addFields({
-            name: `${this.prefix}${name}`,
-            value: command.description,
-            inline: true
-          });
-        });
-
-        await message.reply({ embeds: [embed] });
-      }
-    });
+  for (const file of commandFiles) {
+    const command = require(path.join(commandsPath, file));
+    if (command.name && typeof command.execute === 'function') {
+      this.commands.set(command.name, command);
+    }
   }
+
+  // Optional: log how many commands were loaded
+  console.log(`📦 Loaded ${this.commands.size} commands from /commands`);
+}
+
 
   async handleMessage(message) {
     if (message.author.bot || !message.content.startsWith(this.prefix)) return;

@@ -11,9 +11,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "better-sqlite3": "^12.2.0",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
     "node-cron": "^4.1.0",
-    "openai": "^5.1.0"
+    "openai": "^5.3.0"
   }
 }
