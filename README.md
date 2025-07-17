@@ -1,5 +1,5 @@
 # SenseiBot - A Learning Companion for Discord 🧠
-
+This is gonna be a engine now...
 SenseiBot is an intelligent, AI-powered Discord bot designed to deliver daily educational snippets on a variety of topics, including technology, finance, science, and more. It ensures a unique and non-repetitive learning experience by remembering previously shared terms.
 
 ---
