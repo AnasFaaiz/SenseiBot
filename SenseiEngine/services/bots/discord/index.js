@@ -246,3 +246,4 @@ client.on('error', error => {
 
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN);
+

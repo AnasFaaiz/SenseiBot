@@ -1,0 +1,47 @@
+services:
+  # The Database Service
+  db:
+    image: mysql:8.0
+    container_name: sensei_mysql_db
+    restart: unless-stopped
+    env_file: .env # <-- FIX 1: Add this line to load variables
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - sensei_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The Python Engine Service
+  engine:
+    build: ./services/engine
+    container_name: sensei_engine_py
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # The JavaScript Connector Service
+  connector: # <-- FIX 2: Ensure this name matches your command
+    build: ./services/connectors
+    container_name: sensei_connector_js
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - engine
+
+volumes:
+  sensei_db_data:
