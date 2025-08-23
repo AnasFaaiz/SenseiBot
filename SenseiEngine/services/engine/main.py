@@ -39,22 +39,25 @@ def get_db_connection():
 # --- Database Table Creation on Startup ---
 @app.on_event("startup")
 def startup_event():
-    try:
-        # Use a temporary connection just for startup
-        with next(get_db_connection()) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                CREATE TABLE IF NOT EXISTS used_terms (
-                  id INT AUTO_INCREMENT PRIMARY KEY,
-                  term VARCHAR(255) NOT NULL,
-                  category VARCHAR(255) NOT NULL,
-                  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-                """)
-                conn.commit()
-                print("✅ 'used_terms' table is ready.")
-    except mysql.connector.Error as err:
-        print(f"❌ Database connection or table creation failed: {err}")
+        max_retries = 5 
+        retry_delay = 2 
+        for attempt in range(max_retries):
+            try:
+                with next(get_db_connection()) as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS used_terms (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            term VARCHAR(255) NOT NULL,
+                            category VARCHAR(255) NOT NULL,
+                            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                        """)
+                        conn.commit()
+                        print("✅ 'used_terms' table is ready.")
+                        return 
+            except mysql.connector.Error as err:
+            print(f"❌ Database connection or table creation failed: {err}")
 
 # --- Pydantic Models ---
 class TermRequest(BaseModel):
@@ -83,8 +86,9 @@ async def generate_term(request: TermRequest, db_conn: mysql.connector.MySQLConn
             """, (request.category,))
             recent_terms = [row[0] for row in cursor.fetchall()]
 
-            # 2. Build prompt
             prompt = f"Give me one important and trending {request.category} term of the day with its definition. Format it as 'Term: Definition'. The definition should be concise (under 60 words)."
+            response = gemini_model.generate_content(prompt)
+
             if recent_terms:
                 prompt += f" Do not use any of the following terms: {', '.join(recent_terms)}."
 
